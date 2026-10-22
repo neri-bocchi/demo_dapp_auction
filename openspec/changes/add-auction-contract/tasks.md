@@ -25,7 +25,7 @@
 
 ## 5. Despliegue local y documentación
 
-- [x] 5.1 Crear `script/DeployAuction.s.sol` que lee `MIN_PRICE` y `DURATION` del entorno y despliega `Auction`; verificar desplegando contra `anvil` con `forge script ... --broadcast` y consultando `endTime` con `cast call`
+- [x] 5.1 Crear `script/Subasta.s.sol` que lee `MIN_PRICE` y `DURATION` del entorno y despliega `Auction`; verificar desplegando contra `anvil` con `forge script ... --broadcast` y consultando `endTime` con `cast call`
 - [x] 5.2 Escribir `README.md` con requisitos, comandos de build/test/despliegue local y un ejemplo con `cast` (pujar, retirar, cerrar); verificar ejecutando los comandos del README contra `anvil`
 
 ## 6. Verificación final

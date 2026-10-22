@@ -18,7 +18,7 @@ Repositorio vacío (solo `openspec/` y `.claude/`). Foundry 1.8.6 está instalad
 ## Decisions
 
 ### Layout Foundry estándar
-`forge init` en la raíz: `src/Auction.sol`, `test/Auction.t.sol`, `script/DeployAuction.s.sol`, `forge-std` en `lib/`. Se fija `solc = "0.8.30"` (o la última 0.8.x estable disponible en Foundry) en `foundry.toml` para builds reproducibles.
+`forge init` en la raíz: `src/Auction.sol`, `test/Auction.t.sol`, `script/Subasta.s.sol`, `forge-std` en `lib/`. Se fija `solc = "0.8.30"` (o la última 0.8.x estable disponible en Foundry) en `foundry.toml` para builds reproducibles.
 *Alternativa*: Hardhat — descartado; Foundry ya está instalado y los tests en Solidity con fuzzing son más directos.
 
 ### Un contrato = una subasta
@@ -67,4 +67,4 @@ Sin `receive()` ni `fallback()` payable: Solidity revierte las transferencias di
 
 ## Migration Plan
 
-No aplica (proyecto nuevo). Despliegue local: `anvil` + `forge script script/DeployAuction.s.sol --rpc-url http://localhost:8545 --broadcast`, con `MIN_PRICE` y `DURATION` por variables de entorno.
+No aplica (proyecto nuevo). Despliegue local: `anvil` + `forge script script/Subasta.s.sol --rpc-url http://localhost:8545 --broadcast`, con `MIN_PRICE` y `DURATION` por variables de entorno.

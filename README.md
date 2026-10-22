@@ -44,7 +44,7 @@ export ALICE_PK=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b7869
 export BOB_PK=0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a
 
 MIN_PRICE=1000000000000000000 DURATION=3600 \
-  forge script script/DeployAuction.s.sol --rpc-url $RPC --broadcast --private-key $SELLER_PK
+  forge script script/Subasta.s.sol --rpc-url $RPC --broadcast --private-key $SELLER_PK
 ```
 
 El script imprime la dirección del contrato (`Auction: 0x...`). Guárdala:

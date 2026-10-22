@@ -26,6 +26,6 @@ El proyecto `demo_dapp_auction` está vacío: no existe todavía ningún contrat
 
 ## Impact
 
-- **Código nuevo**: `foundry.toml`, `src/Auction.sol`, `test/Auction.t.sol`, `script/DeployAuction.s.sol`.
+- **Código nuevo**: `foundry.toml`, `src/Auction.sol`, `test/Auction.t.sol`, `script/Subasta.s.sol`.
 - **Dependencias**: Foundry ≥ 1.8 (ya instalado) y `forge-std` como submódulo/librería de tests. Sin dependencias en tiempo de ejecución (no se usa OpenZeppelin).
 - **Fuera de alcance**: frontend, entrega de un NFT/bien en cadena, múltiples subastas en un contrato (factory), extensión automática del plazo (*anti-sniping*), cancelación por el vendedor, y despliegue a testnets/mainnet.
