@@ -33,3 +33,50 @@ jobs:
 
       - name: Run Forge tests
         run: forge test -vvv
+
+  web:
+    name: Web frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build contracts
+        run: forge build
+        working-directory: .
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check generated ABI is up to date
+        run: |
+          npm run abi
+          git diff --exit-code -- src/lib/auction-abi.ts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Integration tests (anvil)
+        run: npm run test:integration
+
+      - name: Build
+        run: npm run build
