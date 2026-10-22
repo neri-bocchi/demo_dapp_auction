@@ -126,6 +126,29 @@ Cuando la subasta esté lista para cerrar, la aplicación SHALL permitir que cua
 - **WHEN** la subasta está abierta
 - **THEN** la acción de cerrar no está disponible
 
+### Requirement: Historial de pujas
+La aplicación SHALL mostrar un registro de todas las pujas aceptadas por la subasta, de la más reciente a la más antigua, con postor, monto y fecha y hora según la cadena. La puja más alta MUST marcarse como "más alta" mientras la subasta no esté cerrada y como "ganadora" tras el cierre; las demás, como "superada". Las pujas de la cuenta activa MUST distinguirse. El registro MUST actualizarse con cada bloque nuevo.
+
+#### Scenario: Varias pujas
+- **WHEN** A pujó 1 ETH y después B pujó 2 ETH
+- **THEN** el registro muestra primero la puja de B (2 ETH, "más alta") y después la de A (1 ETH, "superada"), cada una con su fecha y hora
+
+#### Scenario: Sin pujas
+- **WHEN** nadie ha pujado todavía
+- **THEN** el registro indica que aún no hay pujas
+
+#### Scenario: Puja externa
+- **WHEN** otra cuenta puja desde `cast` con la página abierta
+- **THEN** la nueva puja aparece al principio del registro sin recargar
+
+#### Scenario: Subasta cerrada
+- **WHEN** la subasta está cerrada con ganador B
+- **THEN** la puja de B aparece marcada como "ganadora"
+
+#### Scenario: Pujas propias
+- **WHEN** la cuenta activa es A y A tiene pujas en el registro
+- **THEN** esas pujas aparecen distinguidas como de la cuenta activa
+
 ### Requirement: Estado de las transacciones y errores
 Mientras una transacción esté pendiente, la aplicación SHALL indicarlo y MUST impedir enviar otra acción. Si la transacción revierte o falla, MUST mostrar un mensaje comprensible en español; los errores conocidos del contrato (por ejemplo, puja demasiado baja o subasta terminada) MUST traducirse a mensajes específicos.
 

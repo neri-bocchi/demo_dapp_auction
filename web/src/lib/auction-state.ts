@@ -73,6 +73,35 @@ export function formatRemaining(seconds: bigint): string {
   return `${secs} s`;
 }
 
+export type BidLabel = "highest" | "winner" | "outbid";
+
+type BidLike = { bidder: string; amount: bigint };
+
+/**
+ * Prepara el historial para mostrarlo: de la más reciente a la más antigua, con la
+ * puja vigente marcada como "más alta" (o "ganadora" si la subasta está cerrada),
+ * el resto como "superada", y `mine` en las pujas de la cuenta activa.
+ */
+export function labelBids<T extends BidLike>(
+  bids: readonly T[],
+  { highestBidder, highestBid, ended, account }: {
+    highestBidder: string;
+    highestBid: bigint;
+    ended: boolean;
+    account?: string;
+  },
+): (T & { label: BidLabel; mine: boolean })[] {
+  const same = (a?: string, b?: string) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+  return [...bids].reverse().map((bid) => {
+    const isHighest = same(bid.bidder, highestBidder) && bid.amount === highestBid;
+    return {
+      ...bid,
+      label: isHighest ? (ended ? "winner" : "highest") : "outbid",
+      mine: same(bid.bidder, account),
+    };
+  });
+}
+
 /** Acorta una dirección para mostrarla: `0xf39F…2266`. */
 export function shortAddress(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-4)}`;

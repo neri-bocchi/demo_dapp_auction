@@ -46,12 +46,13 @@ src/lib/
   auction-abi.ts     ABI generado (as const)
   auction-state.ts   PURO: deriveStatus, validateBid, bidRequirement, formatRemaining
   errors.ts          PURO: toUserMessage(error) → string en español
-  auction-client.ts  readAuction, placeBid, withdraw, endAuction (viem)
+  auction-client.ts  readAuction, readBidHistory, placeBid, withdraw, endAuction (viem)
 src/hooks/
   useAccounts.ts     lista de cuentas + cuenta activa en localStorage
   useAuction.ts      lee el estado y lo refresca con cada bloque
+  useBidHistory.ts   historial de pujas, refrescado con cada bloque
 src/components/
-  AccountSelector, AuctionStatus, BidForm, WithdrawButton, CloseButton, NetworkGuard
+  AccountSelector, AuctionStatus, AuctionActions (BidForm), BidHistory, NetworkGuard
 ```
 Las funciones puras no importan viem salvo utilidades como `parseEther` y `formatEther`, lo que permite testearlas sin nodo.
 
@@ -62,6 +63,11 @@ Las funciones puras no importan viem salvo utilidades como `parseEther` y `forma
 ### Reloj de la cadena
 `chainNow = block.timestamp + (Date.now() - fetchedAt) / 1000`, recalculado cada segundo en el cliente para la cuenta atrás. Al minarse un bloque se reajusta, lo que cubre `evm_increaseTime` + `evm_mine`. `deriveStatus({ended, endTime, chainNow})` devuelve `open | ready | closed` con la misma regla que el contrato (`chainNow >= endTime` ⇒ ya no se aceptan pujas).
 *Trade-off*: si anvil lleva rato sin minar, `chainNow` es una estimación. El contrato tiene la última palabra y un revert se muestra como error traducido.
+
+### Historial de pujas desde eventos
+El registro se reconstruye con los eventos `BidPlaced` del contrato: `getContractEvents({ eventName: "BidPlaced", fromBlock: 0n })`, sin indexador ni almacenamiento propio. La fecha de cada puja es el timestamp de su bloque (`getBlock` por cada bloque distinto). Se relee con cada bloque nuevo, igual que el estado. La puja más alta es siempre el último evento, porque el contrato solo acepta pujas mayores que la anterior; aun así se marca comparando con `highestBidder`/`highestBid` para no depender del orden.
+*Alternativa*: guardar el historial en el contrato (un array de pujas). Cambiaría la spec `auction` y encarece el gas; los eventos existen precisamente para esto.
+*Trade-off*: leer desde el bloque 0 en cada bloque nuevo escala mal en una cadena larga. En anvil local son unos pocos bloques; si hiciera falta, se leería solo desde el último bloque visto.
 
 ### Escrituras
 Flujo: `simulateContract` (detecta reverts antes de enviar y decodifica el error), luego `writeContract(request)` y después `waitForTransactionReceipt`. `placeBid` usa `value: parseEther(input)` ya validado. Un único estado `pending` por página bloquea todas las acciones.

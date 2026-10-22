@@ -6,6 +6,7 @@ import {
   deriveStatus,
   formatEthRounded,
   formatRemaining,
+  labelBids,
   shortAddress,
   validateBid,
 } from "./auction-state";
@@ -121,5 +122,48 @@ describe("bidRequirement", () => {
 
   it("con precio mínimo cero pide más de 0", () => {
     expect(bidRequirement(0n, 0n)).toBe("Mínimo: 0.000000000000000001 ETH");
+  });
+});
+
+describe("labelBids", () => {
+  const A = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+  const B = "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC";
+  const bids = [
+    { bidder: A, amount: parseEther("1") },
+    { bidder: B, amount: parseEther("2") },
+  ];
+
+  it("devuelve una lista vacía sin pujas", () => {
+    expect(labelBids([], { highestBidder: "0x0000000000000000000000000000000000000000", highestBid: 0n, ended: false })).toEqual([]);
+  });
+
+  it("ordena de la más reciente a la más antigua y marca la más alta", () => {
+    const labeled = labelBids(bids, { highestBidder: B, highestBid: parseEther("2"), ended: false });
+    expect(labeled.map((b) => [b.bidder, b.label])).toEqual([
+      [B, "highest"],
+      [A, "outbid"],
+    ]);
+  });
+
+  it("marca la ganadora si la subasta está cerrada", () => {
+    const labeled = labelBids(bids, { highestBidder: B, highestBid: parseEther("2"), ended: true });
+    expect(labeled[0].label).toBe("winner");
+    expect(labeled[1].label).toBe("outbid");
+  });
+
+  it("solo marca como más alta la puja vigente aunque el postor tenga pujas anteriores", () => {
+    const raised = [...bids, { bidder: A, amount: parseEther("3") }];
+    const labeled = labelBids(raised, { highestBidder: A, highestBid: parseEther("3"), ended: false });
+    expect(labeled.map((b) => b.label)).toEqual(["highest", "outbid", "outbid"]);
+  });
+
+  it("distingue las pujas de la cuenta activa sin importar mayúsculas", () => {
+    const labeled = labelBids(bids, {
+      highestBidder: B,
+      highestBid: parseEther("2"),
+      ended: false,
+      account: A.toLowerCase(),
+    });
+    expect(labeled.map((b) => b.mine)).toEqual([false, true]);
   });
 });

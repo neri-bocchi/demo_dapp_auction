@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Address } from "viem";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useAuction, useChainClock } from "@/hooks/useAuction";
+import { useBidHistory } from "@/hooks/useBidHistory";
 import { useChainStatus } from "@/hooks/useChainStatus";
 import { endAuction, placeBid, withdraw } from "@/lib/auction-client";
 import { deriveStatus, formatEth } from "@/lib/auction-state";
@@ -13,6 +14,7 @@ import { toUserMessage } from "@/lib/errors";
 import { AccountSelector } from "./AccountSelector";
 import { AuctionActions } from "./AuctionActions";
 import { AuctionStatus } from "./AuctionStatus";
+import { BidHistory } from "./BidHistory";
 import { NetworkGuard } from "./NetworkGuard";
 
 type Feedback = { kind: "success" | "error"; text: string };
@@ -34,6 +36,7 @@ export function AuctionView({ address }: { address: Address }) {
   const online = chainStatus === "ok";
   const { accounts, active, setActive, refresh: refreshAccounts } = useAccounts(online);
   const { read, refresh } = useAuction(address, active, online);
+  const { bids, refresh: refreshBids } = useBidHistory(address, online);
   const data = read?.kind === "ok" ? read.data : undefined;
   const now = useChainClock(data?.blockTimestamp, data?.fetchedAt);
 
@@ -54,7 +57,7 @@ export function AuctionView({ address }: { address: Address }) {
       return false;
     } finally {
       setPending(null);
-      await Promise.all([refresh(), refreshAccounts()]);
+      await Promise.all([refresh(), refreshAccounts(), refreshBids()]);
     }
   }
 
@@ -105,18 +108,25 @@ export function AuctionView({ address }: { address: Address }) {
               void run("Cerrando la subasta", "Subasta cerrada.", (account) => endAuction(clients, address, account))
             }
           />
+          {feedback && (
+            <p
+              role={feedback.kind === "error" ? "alert" : "status"}
+              className={`rounded-lg p-3 text-sm ${
+                feedback.kind === "error" ? "bg-red-50 text-red-900" : "bg-emerald-50 text-emerald-900"
+              }`}
+            >
+              {feedback.text}
+            </p>
+          )}
+          <BidHistory
+            bids={bids}
+            highestBidder={data.highestBidder}
+            highestBid={data.highestBid}
+            ended={data.ended}
+            account={active}
+            accounts={accounts.map((a) => a.address)}
+          />
         </>
-      )}
-
-      {feedback && (
-        <p
-          role={feedback.kind === "error" ? "alert" : "status"}
-          className={`rounded-lg p-3 text-sm ${
-            feedback.kind === "error" ? "bg-red-50 text-red-900" : "bg-emerald-50 text-emerald-900"
-          }`}
-        >
-          {feedback.text}
-        </p>
       )}
     </div>
   );

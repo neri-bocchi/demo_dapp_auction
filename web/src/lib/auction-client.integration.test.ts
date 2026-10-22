@@ -10,7 +10,15 @@ import {
 } from "viem";
 import { beforeAll, beforeEach, describe, expect, inject, it } from "vitest";
 import { auctionAbi } from "./auction-abi";
-import { endAuction, getChainStatus, listAccounts, placeBid, readAuction, withdraw } from "./auction-client";
+import {
+  endAuction,
+  getChainStatus,
+  listAccounts,
+  placeBid,
+  readAuction,
+  readBidHistory,
+  withdraw,
+} from "./auction-client";
 import { createClients, type Clients } from "./clients";
 
 // Requiere `forge build` en la raíz del repo.
@@ -131,5 +139,27 @@ describe("auction-client contra anvil", () => {
     const reverted = (error as BaseError).walk((e) => e instanceof ContractFunctionRevertedError);
     expect(reverted).toBeInstanceOf(ContractFunctionRevertedError);
     expect((reverted as ContractFunctionRevertedError).data?.errorName).toBe("BidTooLow");
+  });
+
+  it("devuelve un historial vacío sin pujas", async () => {
+    expect(await readBidHistory(clients, auction)).toEqual([]);
+  });
+
+  it("devuelve el historial de pujas en orden con su timestamp", async () => {
+    const first = await placeBid(clients, auction, alice, parseEther("1"));
+    await advanceTime(60n);
+    const second = await placeBid(clients, auction, bob, parseEther("2"));
+
+    const history = await readBidHistory(clients, auction);
+    expect(history.map((b) => [b.bidder, b.amount])).toEqual([
+      [alice, parseEther("1")],
+      [bob, parseEther("2")],
+    ]);
+    expect(history[0].transactionHash).toBe(first.transactionHash);
+    expect(history[1].transactionHash).toBe(second.transactionHash);
+
+    const firstBlock = await clients.publicClient.getBlock({ blockNumber: first.blockNumber });
+    expect(history[0].timestamp).toBe(firstBlock.timestamp);
+    expect(history[1].timestamp).toBeGreaterThanOrEqual(history[0].timestamp + 60n);
   });
 });

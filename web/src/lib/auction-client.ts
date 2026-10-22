@@ -91,6 +91,40 @@ export async function readAuction(
   };
 }
 
+export type BidEntry = {
+  bidder: Address;
+  amount: bigint;
+  blockNumber: bigint;
+  /** Timestamp del bloque de la puja, en segundos. */
+  timestamp: bigint;
+  transactionHash: Hash;
+  logIndex: number;
+};
+
+/** Todas las pujas aceptadas (eventos `BidPlaced`), en el orden en que ocurrieron. */
+export async function readBidHistory({ publicClient }: Clients, address: Address): Promise<BidEntry[]> {
+  const logs = await publicClient.getContractEvents({
+    address,
+    abi: auctionAbi,
+    eventName: "BidPlaced",
+    fromBlock: 0n,
+    strict: true,
+  });
+
+  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
+  const blocks = await Promise.all(blockNumbers.map((blockNumber) => publicClient.getBlock({ blockNumber })));
+  const timestamps = new Map(blocks.map((block) => [block.number, block.timestamp]));
+
+  return logs.map((log) => ({
+    bidder: log.args.bidder,
+    amount: log.args.amount,
+    blockNumber: log.blockNumber,
+    timestamp: timestamps.get(log.blockNumber) ?? 0n,
+    transactionHash: log.transactionHash,
+    logIndex: log.logIndex,
+  }));
+}
+
 /** Espera la confirmación de `hash` y falla si la transacción revirtió. */
 async function confirm({ publicClient }: Clients, hash: Hash): Promise<TransactionReceipt> {
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
