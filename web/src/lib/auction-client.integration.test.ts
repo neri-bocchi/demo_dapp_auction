@@ -142,7 +142,7 @@ describe("auction-client contra anvil", () => {
   });
 
   it("devuelve un historial vacío sin pujas", async () => {
-    expect(await readBidHistory(clients, auction)).toEqual([]);
+    expect(await readBidHistory(clients, auction)).toEqual({ bids: [], closed: false });
   });
 
   it("devuelve el historial de pujas en orden con su timestamp", async () => {
@@ -150,7 +150,8 @@ describe("auction-client contra anvil", () => {
     await advanceTime(60n);
     const second = await placeBid(clients, auction, bob, parseEther("2"));
 
-    const history = await readBidHistory(clients, auction);
+    const { bids: history, closed } = await readBidHistory(clients, auction);
+    expect(closed).toBe(false);
     expect(history.map((b) => [b.bidder, b.amount])).toEqual([
       [alice, parseEther("1")],
       [bob, parseEther("2")],
@@ -161,5 +162,14 @@ describe("auction-client contra anvil", () => {
     const firstBlock = await clients.publicClient.getBlock({ blockNumber: first.blockNumber });
     expect(history[0].timestamp).toBe(firstBlock.timestamp);
     expect(history[1].timestamp).toBeGreaterThanOrEqual(history[0].timestamp + 60n);
+  });
+
+  it("marca el historial como cerrado tras AuctionClosed", async () => {
+    await placeBid(clients, auction, alice, parseEther("1"));
+    await advanceTime(DURATION);
+    await endAuction(clients, auction, bob);
+    const { bids, closed } = await readBidHistory(clients, auction);
+    expect(closed).toBe(true);
+    expect(bids).toHaveLength(1);
   });
 });

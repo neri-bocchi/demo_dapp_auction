@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Address } from "viem";
-import { readBidHistory, type BidEntry } from "@/lib/auction-client";
+import { readBidHistory, type BidLog } from "@/lib/auction-client";
 import { clients } from "@/lib/clients";
 
-/** Historial de pujas (eventos `BidPlaced`), releído con cada bloque nuevo. `null` hasta la primera lectura. */
+/** Historial de pujas y cierre (eventos del contrato), releído con cada bloque nuevo. `null` hasta la primera lectura. */
 export function useBidHistory(address: Address, enabled: boolean) {
-  const [bids, setBids] = useState<BidEntry[] | null>(null);
+  const [log, setLog] = useState<BidLog | null>(null);
 
   const load = useCallback(() => readBidHistory(clients, address), [address]);
 
   const refresh = useCallback(async () => {
     try {
-      setBids(await load());
+      setLog(await load());
     } catch {
       // nodo caído: se conserva la última lectura
     }
@@ -25,7 +25,7 @@ export function useBidHistory(address: Address, enabled: boolean) {
     const update = () =>
       load().then(
         (next) => {
-          if (!cancelled) setBids(next);
+          if (!cancelled) setLog(next);
         },
         () => {},
       );
@@ -37,5 +37,5 @@ export function useBidHistory(address: Address, enabled: boolean) {
     };
   }, [enabled, load]);
 
-  return { bids, refresh };
+  return { log, refresh };
 }

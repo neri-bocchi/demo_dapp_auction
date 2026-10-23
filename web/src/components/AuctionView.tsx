@@ -36,7 +36,7 @@ export function AuctionView({ address }: { address: Address }) {
   const online = chainStatus === "ok";
   const { accounts, active, setActive, refresh: refreshAccounts } = useAccounts(online);
   const { read, refresh } = useAuction(address, active, online);
-  const { bids, refresh: refreshBids } = useBidHistory(address, online);
+  const { log: bidLog, refresh: refreshBids } = useBidHistory(address, online);
   const data = read?.kind === "ok" ? read.data : undefined;
   const now = useChainClock(data?.blockTimestamp, data?.fetchedAt);
 
@@ -119,10 +119,7 @@ export function AuctionView({ address }: { address: Address }) {
             </p>
           )}
           <BidHistory
-            bids={bids}
-            highestBidder={data.highestBidder}
-            highestBid={data.highestBid}
-            ended={data.ended}
+            log={bidLog}
             account={active}
             accounts={accounts.map((a) => a.address)}
           />

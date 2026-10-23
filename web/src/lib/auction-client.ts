@@ -101,28 +101,42 @@ export type BidEntry = {
   logIndex: number;
 };
 
-/** Todas las pujas aceptadas (eventos `BidPlaced`), en el orden en que ocurrieron. */
-export async function readBidHistory({ publicClient }: Clients, address: Address): Promise<BidEntry[]> {
+export type BidLog = {
+  /** Pujas aceptadas (eventos `BidPlaced`), en el orden en que ocurrieron. */
+  bids: BidEntry[];
+  /** Si ya se emitió `AuctionClosed`. */
+  closed: boolean;
+};
+
+/**
+ * Historial de la subasta leído solo de sus eventos, en una única consulta de logs,
+ * para que pujas y cierre siempre sean coherentes entre sí.
+ */
+export async function readBidHistory({ publicClient }: Clients, address: Address): Promise<BidLog> {
   const logs = await publicClient.getContractEvents({
     address,
     abi: auctionAbi,
-    eventName: "BidPlaced",
     fromBlock: 0n,
     strict: true,
   });
+  const bidLogs = logs.filter((log) => log.eventName === "BidPlaced");
+  const closed = logs.some((log) => log.eventName === "AuctionClosed");
 
-  const blockNumbers = [...new Set(logs.map((log) => log.blockNumber))];
+  const blockNumbers = [...new Set(bidLogs.map((log) => log.blockNumber))];
   const blocks = await Promise.all(blockNumbers.map((blockNumber) => publicClient.getBlock({ blockNumber })));
   const timestamps = new Map(blocks.map((block) => [block.number, block.timestamp]));
 
-  return logs.map((log) => ({
-    bidder: log.args.bidder,
-    amount: log.args.amount,
-    blockNumber: log.blockNumber,
-    timestamp: timestamps.get(log.blockNumber) ?? 0n,
-    transactionHash: log.transactionHash,
-    logIndex: log.logIndex,
-  }));
+  return {
+    closed,
+    bids: bidLogs.map((log) => ({
+      bidder: log.args.bidder,
+      amount: log.args.amount,
+      blockNumber: log.blockNumber,
+      timestamp: timestamps.get(log.blockNumber) ?? 0n,
+      transactionHash: log.transactionHash,
+      logIndex: log.logIndex,
+    })),
+  };
 }
 
 /** Espera la confirmación de `hash` y falla si la transacción revirtió. */

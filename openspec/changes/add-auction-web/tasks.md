@@ -45,7 +45,7 @@
 - [x] 8.1 Añadir `readBidHistory` a `src/lib/auction-client.ts` (eventos `BidPlaced` desde el bloque 0 con el timestamp de su bloque) y cubrirlo en el test de integración (sin pujas → lista vacía; dos pujas → orden, postores, montos y timestamps); verificar con `npm run test:integration`
 - [x] 8.2 Añadir a `src/lib/auction-state.ts` la función pura `labelBids` (más reciente primero; "más alta", "ganadora" o "superada"; marca de cuenta activa) con tests unitarios para sin pujas, abierta, cerrada y pujas propias; verificar con `npm test`
 - [x] 8.3 Implementar `useBidHistory` (relectura con cada bloque y tras cada transacción) y el componente `BidHistory` en la página de la subasta; verificar con `npx tsc --noEmit`, `npm run lint` y `npm run build`
-- [ ] 8.4 Verificar en el navegador contra anvil: el registro lista las pujas existentes en orden con sus etiquetas, una puja hecha con `cast` aparece arriba sin recargar, y las pujas de la cuenta activa se distinguen
+- [x] 8.4 Verificar en el navegador contra anvil: el registro lista las pujas existentes en orden con sus etiquetas, una puja hecha con `cast` aparece arriba sin recargar, y las pujas de la cuenta activa se distinguen
 
 ## Workflow follow-up
 

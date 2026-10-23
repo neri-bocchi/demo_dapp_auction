@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { BidEntry } from "@/lib/auction-client";
+import type { BidLog } from "@/lib/auction-client";
 import { formatEth, labelBids, shortAddress, type BidLabel } from "@/lib/auction-state";
 
 const LABEL_TEXT: Record<BidLabel, string> = {
@@ -15,18 +15,16 @@ const LABEL_STYLE: Record<BidLabel, string> = {
 };
 
 type Props = {
-  bids: BidEntry[] | null;
-  highestBidder: Address;
-  highestBid: bigint;
-  ended: boolean;
+  log: BidLog | null;
   account: Address | undefined;
   /** Cuentas de anvil, para mostrar su número (#0, #1…) junto a la dirección. */
   accounts: Address[];
 };
 
 /** Registro de todas las pujas aceptadas, de la más reciente a la más antigua. */
-export function BidHistory({ bids, highestBidder, highestBid, ended, account, accounts }: Props) {
-  const labeled = bids ? labelBids(bids, { highestBidder, highestBid, ended, account }) : [];
+export function BidHistory({ log, account, accounts }: Props) {
+  const bids = log?.bids ?? null;
+  const labeled = log ? labelBids(log.bids, { closed: log.closed, account }) : [];
   const accountIndex = (address: Address) =>
     accounts.findIndex((a) => a.toLowerCase() === address.toLowerCase());
 
